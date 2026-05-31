@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "taskmaster": {
+      "command": "node",
+      "args": ["ABSOLUTE_PATH_TO/taskmaster/packages/mcp/dist/index.js"],
+      "env": {
+        "TASKMASTER_PROJECT": "ABSOLUTE_PATH_TO/your-project"
+      }
+    }
+  }
+}

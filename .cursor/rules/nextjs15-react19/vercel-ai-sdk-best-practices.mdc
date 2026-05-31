@@ -1,0 +1,20 @@
+---
+description: AI integration patterns (adapted from Vercel AI SDK rules). Taskmaster uses @cursor/sdk — not Vercel AI SDK.
+globs: apps/web/src/**/*.{ts,tsx}
+---
+> **Taskmaster:** Use `@cursor/sdk` for agent runs (see `apps/web/src/app/api/tasks/[id]/run-agent/route.ts`). Treat items below as general streaming/error-handling guidance only where they fit.
+
+- Use `streamText` for streaming text responses from AI models.
+- Use `streamObject` for streaming structured JSON responses.
+- Implement proper error handling with `onFinish` callback.
+- Use `onChunk` for real-time UI updates during streaming.
+- Prefer server-side streaming for better performance and security.
+- Use `smoothStream` for smoother streaming experiences.
+- Implement proper loading states for AI responses.
+- Use `useChat` for client-side chat interfaces when needed.
+- Use `useCompletion` for client-side text completion interfaces.
+- Handle rate limiting and quota management appropriately.
+- Implement proper authentication and authorization for AI endpoints.
+- Use environment variables for API keys and sensitive configuration.
+- Cache AI responses when appropriate to reduce costs.
+- Implement proper logging for debugging and monitoring.

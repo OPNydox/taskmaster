@@ -1,0 +1,13 @@
+{
+  "name": "taskmaster",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @taskmaster/web dev",
+    "build": "pnpm -r build",
+    "mcp": "pnpm --filter @taskmaster/mcp start",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

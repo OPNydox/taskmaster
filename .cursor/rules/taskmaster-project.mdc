@@ -1,0 +1,38 @@
+---
+description: Taskmaster monorepo layout, stack, and conventions (project-specific)
+alwaysApply: true
+---
+
+# Taskmaster project context
+
+This is a **pnpm monorepo** (Node 20+). Do not assume npm/yarn unless the user asks.
+
+## Layout
+
+| Package | Path | Role |
+|---------|------|------|
+| `@taskmaster/web` | `apps/web/` | Next.js 15 App Router UI, REST API routes under `src/app/api/` |
+| `@taskmaster/core` | `packages/core/` | File-backed task storage, Zod schemas, shared domain logic |
+| `@taskmaster/mcp` | `packages/mcp/` | MCP server for Cursor agents (`@modelcontextprotocol/sdk`) |
+
+## Stack
+
+- **Web**: Next.js 15, React 19, TypeScript, Tailwind CSS v4 (`@tailwindcss/postcss`)
+- **Agents**: `@cursor/sdk` for optional "Run agent" — not Vercel AI SDK
+- **Data**: `.taskmaster/` JSON + NDJSON work logs in the user's project repo (not this repo's DB)
+
+## Commands
+
+- `pnpm install` / `pnpm build` / `pnpm dev` — from repo root
+- `pnpm mcp` — run MCP server (set `TASKMASTER_PROJECT` to target repo)
+- `pnpm typecheck` — typecheck all packages
+
+## Imported rules
+
+Rules under `.cursor/rules/*/` come from [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules). Prefer this file and existing code when they conflict with generic Next.js or UI-library rules (e.g. shadcn, Vercel AI SDK, DaisyUI).
+
+## Scope when editing
+
+- UI and API routes: `apps/web/**`
+- Shared task logic: `packages/core/**`
+- MCP tools: `packages/mcp/**`
