@@ -24,32 +24,63 @@ export class TaskmasterNotInitializedError extends Error {
   }
 }
 
+export interface ListTasksResult {
+  tasks: Task[];
+  warnings: string[];
+}
+
 async function ensureInitialized(projectRoot: string): Promise<void> {
   if (!(await configExists(projectRoot))) {
     throw new TaskmasterNotInitializedError(projectRoot);
   }
 }
 
-export async function listTasks(projectRoot: string): Promise<Task[]> {
+function parseTaskFromRaw(
+  raw: string,
+  fileName: string,
+): { task?: Task; warning?: string } {
+  try {
+    return { task: taskSchema.parse(JSON.parse(raw)) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid task file";
+    return { warning: `Skipped ${fileName}: ${message}` };
+  }
+}
+
+export async function listTasksWithWarnings(
+  projectRoot: string,
+): Promise<ListTasksResult> {
   await ensureInitialized(projectRoot);
   const tasksDir = getTasksDir(projectRoot);
   let entries: string[];
   try {
     entries = await fs.readdir(tasksDir);
   } catch {
-    return [];
+    return { tasks: [], warnings: [] };
   }
 
   const tasks: Task[] = [];
+  const warnings: string[] = [];
   for (const file of entries) {
     if (!file.endsWith(".json")) continue;
     const raw = await fs.readFile(path.join(tasksDir, file), "utf8");
-    tasks.push(taskSchema.parse(JSON.parse(raw)));
+    const parsed = parseTaskFromRaw(raw, file);
+    if (parsed.task) {
+      tasks.push(parsed.task);
+    } else if (parsed.warning) {
+      warnings.push(parsed.warning);
+    }
   }
 
-  return tasks.sort(
+  tasks.sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
+  return { tasks, warnings };
+}
+
+export async function listTasks(projectRoot: string): Promise<Task[]> {
+  const { tasks } = await listTasksWithWarnings(projectRoot);
+  return tasks;
 }
 
 export async function getTask(
@@ -60,10 +91,11 @@ export async function getTask(
   const filePath = getTaskFilePath(projectRoot, taskId);
   try {
     const raw = await fs.readFile(filePath, "utf8");
-    return taskSchema.parse(JSON.parse(raw));
+    const parsed = parseTaskFromRaw(raw, `${taskId}.json`);
+    return parsed.task ?? null;
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw err;
+    return null;
   }
 }
 

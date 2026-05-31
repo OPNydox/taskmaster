@@ -1,15 +1,28 @@
-import { createTask, listTasks } from "@taskmaster/core";
+import {
+  TaskmasterNotInitializedError,
+  createTask,
+  listTasksWithWarnings,
+} from "@taskmaster/core";
 import { errorResponse, jsonResponse, requireProjectRoot } from "@/lib/project";
+
+function tasksErrorStatus(err: unknown): number {
+  if (err instanceof TaskmasterNotInitializedError) return 400;
+  if (err instanceof Error && err.message.includes("No project")) return 400;
+  return 500;
+}
 
 export async function GET() {
   try {
     const projectRoot = await requireProjectRoot();
-    const tasks = await listTasks(projectRoot);
-    return jsonResponse({ tasks });
+    const { tasks, warnings } = await listTasksWithWarnings(projectRoot);
+    return jsonResponse({
+      tasks,
+      ...(warnings.length > 0 ? { warnings } : {}),
+    });
   } catch (err) {
     return errorResponse(
       err instanceof Error ? err.message : "Failed to list tasks",
-      500,
+      tasksErrorStatus(err),
     );
   }
 }

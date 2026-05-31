@@ -80,6 +80,10 @@ export default function HomePage() {
       setError(data.error ?? "Init failed");
       return;
     }
+    setState((prev) => ({
+      ...prev,
+      initialized: true,
+    }));
     router.push("/board");
   }
 

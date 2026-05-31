@@ -13,6 +13,8 @@ export default function BoardPage() {
   const [config, setConfig] = useState<ProjectConfig | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -29,14 +31,27 @@ export default function BoardPage() {
       fetch("/api/config"),
       fetch("/api/tasks"),
     ]);
-    if (!configRes.ok || !tasksRes.ok) {
-      router.replace("/");
+
+    if (!configRes.ok) {
+      const data = await configRes.json().catch(() => ({}));
+      setLoadError(data.error ?? "Failed to load project config");
+      setLoading(false);
       return;
     }
+
+    if (!tasksRes.ok) {
+      const data = await tasksRes.json().catch(() => ({}));
+      setLoadError(data.error ?? "Failed to load tasks");
+      setLoading(false);
+      return;
+    }
+
     const configData = await configRes.json();
     const tasksData = await tasksRes.json();
     setConfig(configData);
     setTasks(tasksData.tasks);
+    setWarnings(tasksData.warnings ?? []);
+    setLoadError(null);
     setLoading(false);
   }, [router]);
 
@@ -74,7 +89,13 @@ export default function BoardPage() {
     return (
       <div className="min-h-screen">
         <Header projectRoot={projectRoot} />
-        <main className="p-8 text-[var(--muted)]">Loading board…</main>
+        <main className="p-8">
+          {loadError ? (
+            <p className="text-sm text-[var(--danger)]">{loadError}</p>
+          ) : (
+            <p className="text-[var(--muted)]">Loading board…</p>
+          )}
+        </main>
       </div>
     );
   }
@@ -91,6 +112,17 @@ export default function BoardPage() {
           + New task
         </button>
       </div>
+
+      {warnings.length > 0 && (
+        <div className="mx-6 mb-3 rounded-md border border-[var(--warning)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--warning)]">
+          <p className="font-medium">Some task files could not be loaded:</p>
+          <ul className="mt-1 list-inside list-disc">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex flex-1 gap-4 overflow-x-auto px-6 pb-6">
         {config.board.columns.map((colId) => {
